@@ -17,7 +17,7 @@ load(
 load("//package:solver.bzl", "solve_command", "solver_cache")
 load("//package:system.bzl", "PackageSystemInfo")
 load("//package:verify.bzl", "repository_verifier")
-load("//platforms:architecture.bzl", "ARCHITECTURES", "architecture")
+load("//platforms:architecture.bzl", "architecture")
 load("//platforms:defs.bzl", "execution_transition")
 load(":runtime.bzl", "BoxInfo", "box_run")
 
@@ -367,7 +367,7 @@ def new(
         name = name,
         # Installing the box runs the scriptlets of its packages, which are binaries of the box's
         # architecture.
-        exec_compatible_with = architecture.select({arch: ["tine//platforms:can-execute-" + arch] for arch in ARCHITECTURES}),
+        exec_compatible_with = architecture.capability(),
         packages = packages,
         release = release,
         resolver_box = resolver_box,

@@ -234,4 +234,7 @@ def package_manager(name: str, **kwargs) -> None:
 
     # An image reaches this through a dependency and configures it on the way, so it takes the
     # package's compatibility without the per-distribution aliases a named target needs.
-    _package_manager(name = name, **(distribution.attrs() | kwargs))
+    # An image installs packages through the package manager's box, and the installation runs their
+    # scriptlets. The box is configured for the package manager's execution platform, which therefore has
+    # to run binaries of the architecture the package manager resolves for.
+    _package_manager(name = name, **(distribution.attrs() | {"exec_compatible_with": architecture.capability()} | kwargs))

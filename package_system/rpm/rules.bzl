@@ -11,6 +11,7 @@ load("//package:install.bzl", "install_packages")
 load("//package:manager.bzl", "PackageManagerInfo")
 load("//package:repository.bzl", "LocalPackageInfo", "RepositoryPin", "declare_remote_repository")
 load("//package:system.bzl", "PackageSystemInfo")
+load("//platforms:architecture.bzl", "architecture")
 load("//project:defs.bzl", "project")
 
 PACKAGE_SYSTEM = "@tine//package_system/rpm:package_system"
@@ -211,5 +212,6 @@ def rpm_package(
         source_tree = source_tree,
         in_place_rpmbuild_options = in_place_rpmbuild_options,
         in_place_spec = in_place_spec,
+        exec_compatible_with = architecture.capability(),
         **kwargs,
     )

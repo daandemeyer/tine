@@ -37,7 +37,7 @@ load(
     "uki_subtargets",
 )
 load("//package:manager.bzl", "PackageManagerInfo")
-load("//platforms:architecture.bzl", "ARCHITECTURES")
+load("//platforms:architecture.bzl", "ARCHITECTURES", "architecture")
 load(
     ":image.bzl",
     "IMAGE_ATTRS",
@@ -496,7 +496,7 @@ def rootfs_archive(
         name = name,
         ops = flatten_operations(ops),
         version = resolve_version("rootfs_archive {}".format(name), version),
-        **(distribution.distributed(name, distro, visibility) | kwargs),
+        **(distribution.distributed(name, distro, visibility) | {"exec_compatible_with": architecture.capability()} | kwargs),
     )
 
 def sysext_image(
@@ -512,7 +512,7 @@ def sysext_image(
         name = name,
         ops = flatten_operations(ops),
         version = resolve_version("sysext_image {}".format(name), version),
-        **(distribution.distributed(name, distro, visibility) | kwargs),
+        **(distribution.distributed(name, distro, visibility) | {"exec_compatible_with": architecture.capability()} | kwargs),
     )
 
 def bootable_disk_image(
@@ -586,5 +586,5 @@ def bootable_disk_image(
         sign_expected_pcr_key = sign_expected_pcr_key,
         verity_key = verity_key,
         version = version,
-        **(distribution.distributed(name, distro, visibility) | kwargs),
+        **(distribution.distributed(name, distro, visibility) | {"exec_compatible_with": architecture.capability()} | kwargs),
     )

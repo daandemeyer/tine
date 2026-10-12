@@ -63,6 +63,10 @@ def _configured() -> Select:
     """
     return _select({name: name for name in ARCHITECTURES})
 
+def _capability() -> Select:
+    """`exec_compatible_with` for a target whose actions run binaries of the architecture it is built for."""
+    return _select({name: ["tine//platforms:can-execute-" + name] for name in ARCHITECTURES})
+
 def _host() -> str:
     """The architecture of the machine Buck runs on."""
     arch = host_info().arch
@@ -73,6 +77,7 @@ def _host() -> str:
     fail("architecture: tine runs on {}, not on this host".format(sorted(ARCHITECTURES)))
 
 architecture = struct(
+    capability = _capability,
     configured = _configured,
     host = _host,
     select = _select,

@@ -11,6 +11,7 @@ load(
     "declare_image_archive",
 )
 load("//package:manager.bzl", "PackageManagerInfo")
+load("//platforms:architecture.bzl", "architecture")
 load(
     ":image.bzl",
     "IMAGE_ATTRS",
@@ -116,5 +117,5 @@ def initrd_image(
         name = name,
         ops = flatten_operations(ops),
         version = resolve_version("initrd_image {}".format(name), version),
-        **(distribution.distributed(name, distro, visibility) | kwargs),
+        **(distribution.distributed(name, distro, visibility) | {"exec_compatible_with": architecture.capability()} | kwargs),
     )

@@ -853,4 +853,8 @@ def layer(
     **kwargs,
 ) -> None:
     """Create an initial image or apply one delta to a parent image."""
-    _image(name = name, ops = flatten_operations(ops), **(distribution.distributed(name, distro, visibility) | kwargs))
+    _image(
+        name = name,
+        ops = flatten_operations(ops),
+        **(distribution.distributed(name, distro, visibility) | {"exec_compatible_with": architecture.capability()} | kwargs),
+    )

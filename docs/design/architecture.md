@@ -442,7 +442,9 @@ architecture, each defined the same on every host. A platform has a `can-execute
 binaries its actions can run. The host's own platform is always registered, and `[tine] emulate` adds the
 platforms of architectures the host runs through a qemu binfmt handler. An action for one architecture
 therefore has the same configuration, and the same cache key, on a host of that architecture and on a host
-that emulates it.
+that emulates it. A target whose actions run binaries of the architecture it is built for requires that
+architecture's capability: an image, a package manager, a buildroot and an rpm build all run package
+scriptlets. On a host that neither is nor emulates that architecture, such a target fails to configure.
 
 A target named on the command line or reached as an ordinary dependency is configured for the target
 platform instead. To build each box once per execution platform, the box rule has an incoming transition.

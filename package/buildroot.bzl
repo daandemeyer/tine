@@ -3,6 +3,7 @@
 
 """Shared native package buildroots."""
 
+load("//platforms:architecture.bzl", "architecture")
 load(":install.bzl", "install_packages")
 load(":manager.bzl", "PackageManagerInfo")
 
@@ -59,4 +60,4 @@ _buildroot = rule(
 def buildroot(name: str, **kwargs) -> None:
     if not name.endswith(".buildroot"):
         fail("buildroot name must end with '.buildroot': {}".format(name))
-    _buildroot(name = name, **kwargs)
+    _buildroot(name = name, **({"exec_compatible_with": architecture.capability()} | kwargs))
