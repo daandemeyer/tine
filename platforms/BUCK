@@ -1,16 +1,58 @@
 # SPDX-FileCopyrightText: Amutable GmbH <https://amutable.com/>
 # SPDX-License-Identifier: MPL-2.0
 
+load("@prelude//:rules.bzl", "constraint_setting", "constraint_value")
 load("@prelude//platforms:defs.bzl", "host_configuration")
-load(":architecture.bzl", "ARCHITECTURES")
-load(":defs.bzl", "execution_platform", "target_platform")
+load(":architecture.bzl", "ARCHITECTURES", "architecture")
+load(":defs.bzl", "execution_platform", "execution_platforms", "target_platform")
+
+# A `can-execute-<arch>` capability says that an execution platform's actions can run binaries of that
+# architecture. A target that runs binaries of an architecture requires its capability in
+# `exec_compatible_with`.
+[
+    constraint_setting(
+        name = "execute-" + name,
+        visibility = ["PUBLIC"],
+    )
+    for name in ARCHITECTURES
+]
+
+[
+    constraint_value(
+        name = "can-execute-" + name,
+        constraint_setting = ":execute-" + name,
+        visibility = ["PUBLIC"],
+    )
+    for name in ARCHITECTURES
+]
+
+# One execution platform per architecture, defined the same on every host. An action for one architecture
+# then has the same configuration, and so the same cache key, on a host of that architecture and on a host
+# that emulates it.
+[
+    execution_platform(
+        name = "exec-" + name,
+        capability = ":can-execute-" + name,
+        cpu_configuration = spellings.config,
+        os_configuration = "config//os:linux",
+        visibility = ["PUBLIC"],
+    )
+    for name, spellings in ARCHITECTURES.items()
+]
+
+# `[tine] emulate` lists the architectures the host runs through a qemu binfmt handler, for example `arm64`
+# on an x86_64 host.
+_EMULATED = [name.strip() for name in read_root_config("tine", "emulate", "").split(",") if name.strip()]
 
 # `tine init` points a project that builds against this cell here too, for both its execution and
-# its target platform, so every such project caches without configuring anything.
-execution_platform(
+# its target platform, so every such project caches without configuring anything. The host's own
+# execution platform comes first, so an action that requires no capability runs natively.
+execution_platforms(
     name = "default",
     cpu_configuration = host_configuration.cpu,
     os_configuration = host_configuration.os,
+    platforms = [":exec-" + architecture.host()]
+    + [":exec-" + name for name in _EMULATED if architecture.spelling(name, "config") and name != architecture.host()],
     visibility = ["PUBLIC"],
 )
 

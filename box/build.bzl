@@ -17,8 +17,8 @@ load(
 load("//package:solver.bzl", "solve_command", "solver_cache")
 load("//package:system.bzl", "PackageSystemInfo")
 load("//package:verify.bzl", "repository_verifier")
-load("//platforms:architecture.bzl", "architecture")
-load("//platforms:defs.bzl", "host_transition")
+load("//platforms:architecture.bzl", "ARCHITECTURES", "architecture")
+load("//platforms:defs.bzl", "execution_transition")
 load(":runtime.bzl", "BoxInfo", "box_run")
 
 _REPOSITORY_PRIORITY = 99
@@ -263,13 +263,13 @@ _box = rule(
             default = None,
             doc = "predecessor box used to resolve and install this box's transaction",
         ),
-        # `host_transition` configures a box for the build host, so this is the host's architecture.
+        # `execution_transition` configures a box for an execution platform, so this is its architecture.
         "_arch": attrs.string(default = architecture.configured(), doc = "the resolution arch"),
         # BoxInfo carries this into the rest of the graph.
         "_sandbox": attrs.exec_dep(default = "tine//box:sandbox", providers = [RunInfo]),
     },
-    # A box runs on the build host. Every caller reaches the same box, whatever its configuration is.
-    cfg = host_transition,
+    # A box runs on the execution platform an `exec_dep` reaches it from, and on the host's otherwise.
+    cfg = execution_transition,
 )
 
 def _box_lock_impl(ctx: AnalysisContext) -> list[Provider]:
@@ -365,6 +365,9 @@ def new(
 
     _box(
         name = name,
+        # Installing the box runs the scriptlets of its packages, which are binaries of the box's
+        # architecture.
+        exec_compatible_with = architecture.select({arch: ["tine//platforms:can-execute-" + arch] for arch in ARCHITECTURES}),
         packages = packages,
         release = release,
         resolver_box = resolver_box,

@@ -436,20 +436,26 @@ the image-building tools; a VM runner takes its box explicitly, so only a box as
 that stack. The base release identifies where this userspace came from, not the only release it may
 operate on.
 
-A box runs on the build host, so it is an execution dependency: a rule takes it with `attrs.exec_dep`, a
-command line with `$(location_exec)`. A target named on the command line or reached as an ordinary
-dependency is configured for the target platform instead. To build each box once, the box rule has an
-incoming transition to the host's platform. tine's execution platform registers no exec marker
-constraint, so the execution configuration is the same as the host platform's. `buck build`, `buck run`,
-execution dependencies and ordinary dependencies therefore all reach the same box. This assumes one
-execution platform, for the host's architecture. An execution platform for another architecture, such as
-a remote arm64 one, still gets the box built for the host. Its actions then run binaries for the wrong
-architecture.
+A box runs on an execution platform, so it is an execution dependency: a rule takes it with
+`attrs.exec_dep`, a command line with `$(location_exec)`. tine registers one execution platform per
+architecture, each defined the same on every host. A platform has a `can-execute-<arch>` constraint for the
+binaries its actions can run. The host's own platform is always registered, and `[tine] emulate` adds the
+platforms of architectures the host runs through a qemu binfmt handler. An action for one architecture
+therefore has the same configuration, and the same cache key, on a host of that architecture and on a host
+that emulates it.
+
+A target named on the command line or reached as an ordinary dependency is configured for the target
+platform instead. To build each box once per execution platform, the box rule has an incoming transition.
+The transition keeps an execution configuration, which it recognizes by its capability constraint, and
+sends every other caller to the host's execution platform. A box requires the capability of its own
+architecture, because installing it runs the scriptlets of its packages. No execution platform registers
+the prelude's exec marker constraint: Buck would keep that mark through the transition and configure
+every box twice.
 
 A box's packages can `select()` on the architecture. A box lock is configured for its own architecture,
 so it resolves the packages for that architecture. A child box's lock reads its parent's packages from the
-parent's lock for the same architecture, because the parent box itself is configured for the host. A child
-box can therefore only keep a lock for an architecture that its parent keeps one for.
+parent's lock for the same architecture, because the parent box itself is configured for an execution
+platform. A child box can therefore only keep a lock for an architecture that its parent keeps one for.
 
 A remote repository serves one architecture, and its content depends on nothing else. Its rule has an
 incoming transition to that architecture's target platform. A box lock, the box and an image of the same
